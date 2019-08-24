@@ -18,12 +18,13 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     ImageView imagePengguna;
     Button buttonImage;
-    int intentToActivity=1;
+    int SELECT_PHOTO=1;
     String pathToFile;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,27 +35,38 @@ public class MainActivity extends AppCompatActivity {
         imagePengguna.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent= new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                startActivityForResult(intent,intentToActivity);
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, SELECT_PHOTO);
             }
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==RESULT_OK && resultCode==1){
-            Uri pickImage= data.getData();
-            String [] filePath= {MediaStore.Images.Media.DATA};
-            Cursor cursor= getContentResolver().query(pickImage, filePath, null, null);
-            cursor.moveToFirst();
-            String imagePath= cursor.getString(cursor.getColumnIndex(filePath[0]));
-            BitmapFactory.Options options= new BitmapFactory.Options();
-            options.inPreferredConfig= Bitmap.Config.ARGB_8888;
-            Bitmap bitmap= BitmapFactory.decodeFile(imagePath, options);
-            imagePengguna.setImageBitmap(bitmap);
+        if (requestCode == SELECT_PHOTO) {
+
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    // Get the URI of the selected file
+                    final Uri uri = data.getData();
+                    useImage(uri);
+                }
+            }
+            super.onActivityResult(requestCode, resultCode, data);
+
         }
+    }
+    void useImage(Uri uri)
+    {
+        Bitmap bitmap = null;
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //use the bitmap as you like
+        imagePengguna.setImageBitmap(bitmap);
     }
 }
